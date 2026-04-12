@@ -2,12 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="メトロノーム">
 <title>オートテンポ メトロノーム</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 2rem 1rem; }
-.wrap { background: #111; border-radius: 16px; padding: 2rem 1.5rem; max-width: 420px; width: 100%; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #111; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 0; margin: 0; }
+.wrap { background: #111; border-radius: 0; padding: 2rem 1.5rem; max-width: 420px; width: 100%; min-height: 100vh; }
 h1 { font-size: 16px; font-weight: 500; color: #555; text-align: center; margin-bottom: 1.5rem; letter-spacing: 0.04em; }
 .beat-indicator { width: 64px; height: 64px; border-radius: 50%; background: #1a1a1a; border: 1px solid #333; margin: 0 auto 1.25rem; transition: background 0.05s; }
 .beat-indicator.flash { background: #1D9E75; }.beat-indicator.flash-accent { background: #EF9F27; }.beat-indicator.flash-countin { background: #BA7517; }
@@ -25,29 +28,28 @@ h1 { font-size: 16px; font-weight: 500; color: #555; text-align: center; margin-
 .beat-dot.current-accent { background: #EF9F27; border-color: #EF9F27; transform: scale(1.3); }
 .section-label { font-size: 11px; color: #555; margin-bottom: 8px; letter-spacing: 0.06em; text-transform: uppercase; }
 .chip-row { display: flex; gap: 5px; margin-bottom: 1.25rem; flex-wrap: nowrap; }
-.chip { flex: 1; min-width: 0; padding: 6px 4px; border-radius: 999px; border: 1px solid #333; font-size: 11px; background: #1a1a1a; color: #888; cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.15s; }
+.chip { flex: 1; min-width: 0; padding: 8px 4px; border-radius: 999px; border: 1px solid #333; font-size: 11px; background: #1a1a1a; color: #888; cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.15s; touch-action: manipulation; }
 .chip:hover { border-color: #555; color: #ccc; }
 .chip.active { background: #1D9E75; border-color: #1D9E75; color: #fff; }
 .chip.disabled { opacity: 0.3; pointer-events: none; }
 .interval-chips .chip { font-size: 13px; font-weight: 500; }
 .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
 .toggle-row label { font-size: 13px; color: #888; cursor: pointer; }
-.toggle { width: 36px; height: 20px; border-radius: 999px; background: #333; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.toggle { width: 44px; height: 24px; border-radius: 999px; background: #333; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; touch-action: manipulation; }
 .toggle.on { background: #1D9E75; }
-.toggle-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; position: absolute; top: 3px; left: 3px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-.toggle.on .toggle-thumb { left: 19px; }
+.toggle-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; position: absolute; top: 3px; left: 3px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.toggle.on .toggle-thumb { left: 23px; }
 .divider { border: none; border-top: 1px solid #1e1e1e; margin: 0.25rem 0 1rem; }
 .row { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; transition: opacity 0.2s; }
 .row.disabled { opacity: 0.3; pointer-events: none; }
 .row label { font-size: 13px; color: #888; width: 110px; flex-shrink: 0; }
-.row input[type=range] { flex: 1; accent-color: #1D9E75; }
+.row input[type=range] { flex: 1; accent-color: #1D9E75; height: 32px; }
 .row .val { font-size: 13px; font-weight: 500; color: #ccc; min-width: 48px; text-align: right; }
 .vol-icon { font-size: 16px; width: 20px; flex-shrink: 0; text-align: center; }
 .btn-row { display: flex; gap: 8px; margin-top: 1.5rem; }
-.btn-row button { flex: 1; padding: 11px; font-size: 15px; font-weight: 500; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; transition: all 0.15s; }
-.btn-row button:hover { background: #222; color: #ccc; }
+.btn-row button { flex: 1; padding: 14px; font-size: 16px; font-weight: 500; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; transition: all 0.15s; touch-action: manipulation; }
+.btn-row button:active { opacity: 0.7; }
 #startBtn { background: #1D9E75 !important; border-color: #1D9E75 !important; color: #fff !important; }
-#startBtn:hover { background: #0F6E56 !important; }
 #startBtn.running { background: #1a1a1a !important; border-color: #333 !important; color: #888 !important; }
 .progress-bar { height: 4px; background: #1a1a1a; border-radius: 2px; margin-top: 1.25rem; overflow: hidden; }
 .progress-fill { height: 100%; background: #1D9E75; border-radius: 2px; transition: width 0.3s; width: 0%; }
@@ -132,8 +134,7 @@ const DEFAULTS={sound:'highpico',accent:true,countIn:true,fixedTempo:false,pause
 let audioCtx=null,masterGain=null,limiter=null,running=false,currentBpm=DEFAULTS.startBpm;
 let beatCount=0,nextBeatTime=0,schedulerRafId=null;
 let currentSound=DEFAULTS.sound,accentEnabled=DEFAULTS.accent,countInEnabled=DEFAULTS.countIn;
-let fixedTempo=DEFAULTS.fixedTempo;
-let currentInterval=DEFAULTS.interval;
+let fixedTempo=DEFAULTS.fixedTempo,currentInterval=DEFAULTS.interval;
 function calcVol(v){return Math.pow(v/100,2)*4.0;}
 let volumeLevel=calcVol(DEFAULTS.volume),restartDebounce=null;
 const startBpmEl=document.getElementById('startBpm'),endBpmEl=document.getElementById('endBpm');
@@ -150,51 +151,34 @@ startBpmEl.addEventListener('input',function(){document.getElementById('startBpm
 endBpmEl.addEventListener('input',function(){document.getElementById('endBpmVal').textContent=this.value;if(running)scheduleRestart();});
 stepEl.addEventListener('input',function(){document.getElementById('stepVal').textContent=this.value;});
 
-function toggleFixedTempo(){
-  fixedTempo=!fixedTempo;
-  document.getElementById('fixedTempoToggle').classList.toggle('on',fixedTempo);
-  applyFixedTempoUI();
-  if(running)scheduleRestart();
+function initAudio(){
+  if(audioCtx) return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  masterGain=audioCtx.createGain();
+  masterGain.gain.setValueAtTime(volumeLevel,audioCtx.currentTime);
+  limiter=audioCtx.createDynamicsCompressor();
+  limiter.threshold.value=-3;limiter.knee.value=3;limiter.ratio.value=20;limiter.attack.value=0.001;limiter.release.value=0.1;
+  masterGain.connect(limiter);limiter.connect(audioCtx.destination);
 }
-function applyFixedTempoUI(){
-  const disabled=fixedTempo;
-  document.getElementById('rowEndBpm').classList.toggle('disabled',disabled);
-  document.getElementById('rowStep').classList.toggle('disabled',disabled);
-  document.getElementById('labelInterval').style.opacity=disabled?'0.3':'1';
-  document.querySelectorAll('#intervalChips .chip').forEach(c=>c.classList.toggle('disabled',disabled));
-  // ゲージラベル
-  document.getElementById('beatProgressLabel').textContent=disabled?'':'次のテンポアップまで';
+function startPlaying(){
+  const p=getParams();currentBpm=p.startBpm;beatCount=0;
+  nextBeatTime=audioCtx.currentTime+0.1;
+  bpmDisp.textContent=currentBpm;progressFill.style.width='0%';statusEl.textContent='';
+  running=true;startBtn.textContent='停止';startBtn.classList.add('running');
+  buildDots();
+  if(countInEnabled)scheduleCountIn(nextBeatTime,()=>scheduleBeats());else scheduleBeats();
 }
 
+function toggleFixedTempo(){fixedTempo=!fixedTempo;document.getElementById('fixedTempoToggle').classList.toggle('on',fixedTempo);applyFixedTempoUI();if(running)scheduleRestart();}
+function applyFixedTempoUI(){const disabled=fixedTempo;document.getElementById('rowEndBpm').classList.toggle('disabled',disabled);document.getElementById('rowStep').classList.toggle('disabled',disabled);document.getElementById('labelInterval').style.opacity=disabled?'0.3':'1';document.querySelectorAll('#intervalChips .chip').forEach(c=>c.classList.toggle('disabled',disabled));document.getElementById('beatProgressLabel').textContent=disabled?'':'次のテンポアップまで';}
 function scheduleRestart(){clearTimeout(restartDebounce);restartDebounce=setTimeout(()=>{if(running)doRestart();},300);}
-function doRestart(){cancelAnimationFrame(schedulerRafId);currentBpm=parseInt(startBpmEl.value);beatCount=0;progressFill.style.width='0%';statusEl.textContent='';bpmDisp.textContent=currentBpm;nextBeatTime=audioCtx.currentTime+0.05;buildDots();if(countInEnabled)scheduleCountIn(nextBeatTime,()=>scheduleBeats());else scheduleBeats();}
+function doRestart(){cancelAnimationFrame(schedulerRafId);currentBpm=parseInt(startBpmEl.value);beatCount=0;progressFill.style.width='0%';statusEl.textContent='';bpmDisp.textContent=currentBpm;nextBeatTime=audioCtx.currentTime+0.1;buildDots();if(countInEnabled)scheduleCountIn(nextBeatTime,()=>scheduleBeats());else scheduleBeats();}
 function toggleAccent(){accentEnabled=!accentEnabled;document.getElementById('accentToggle').classList.toggle('on',accentEnabled);}
 function toggleCountIn(){countInEnabled=!countInEnabled;document.getElementById('countInToggle').classList.toggle('on',countInEnabled);}
 function getParams(){return{startBpm:parseInt(startBpmEl.value),endBpm:parseInt(endBpmEl.value),interval:currentInterval,step:parseInt(stepEl.value),pause:parseFloat(pauseEl.value)};}
 function isAccentPos(i){return accentEnabled&&(i%4===0);}
-
-function buildDots(){
-  const container=document.getElementById('beatRows');
-  container.innerHTML='';
-  if(fixedTempo){document.getElementById('beatProgressLabel').textContent='';return;}
-  document.getElementById('beatProgressLabel').textContent='次のテンポアップまで';
-  const rowCount=Math.ceil(currentInterval/16);
-  for(let r=0;r<rowCount;r++){
-    const rowEl=document.createElement('div');rowEl.className='beat-row';
-    const start=r*16,end=Math.min(start+16,currentInterval);
-    for(let i=start;i<end;i++){const d=document.createElement('div');d.className='beat-dot';d.id='dot-'+i;rowEl.appendChild(d);}
-    container.appendChild(rowEl);
-  }
-}
-function updateDots(pos){
-  if(fixedTempo)return;
-  for(let i=0;i<currentInterval;i++){
-    const d=document.getElementById('dot-'+i);if(!d)continue;
-    d.classList.remove('filled','filled-accent','current','current-accent');
-    if(i<pos)d.classList.add(isAccentPos(i)?'filled-accent':'filled');
-    else if(i===pos)d.classList.add(isAccentPos(i)?'current-accent':'current');
-  }
-}
+function buildDots(){const container=document.getElementById('beatRows');container.innerHTML='';if(fixedTempo){document.getElementById('beatProgressLabel').textContent='';return;}document.getElementById('beatProgressLabel').textContent='次のテンポアップまで';const rowCount=Math.ceil(currentInterval/16);for(let r=0;r<rowCount;r++){const rowEl=document.createElement('div');rowEl.className='beat-row';const start=r*16,end=Math.min(start+16,currentInterval);for(let i=start;i<end;i++){const d=document.createElement('div');d.className='beat-dot';d.id='dot-'+i;rowEl.appendChild(d);}container.appendChild(rowEl);}}
+function updateDots(pos){if(fixedTempo)return;for(let i=0;i<currentInterval;i++){const d=document.getElementById('dot-'+i);if(!d)continue;d.classList.remove('filled','filled-accent','current','current-accent');if(i<pos)d.classList.add(isAccentPos(i)?'filled-accent':'filled');else if(i===pos)d.classList.add(isAccentPos(i)?'current-accent':'current');}}
 function flashBeat(type){beatEl.classList.remove('flash','flash-accent','flash-countin');void beatEl.offsetWidth;beatEl.classList.add(type);setTimeout(()=>beatEl.classList.remove('flash','flash-accent','flash-countin'),80);}
 function getDest(){return masterGain;}
 function playHihat(ctx,dest,time,accent){const len=ctx.sampleRate*0.06,buf=ctx.createBuffer(1,len,ctx.sampleRate),data=buf.getChannelData(0);for(let i=0;i<len;i++)data[i]=Math.random()*2-1;const src=ctx.createBufferSource();src.buffer=buf;const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=7000;const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=10000;bp.Q.value=0.8;const g=ctx.createGain();src.connect(hp);hp.connect(bp);bp.connect(g);g.connect(dest);g.gain.setValueAtTime(accent?0.9:0.65,time);g.gain.exponentialRampToValueAtTime(0.001,time+(accent?0.055:0.04));src.start(time);}
@@ -202,31 +186,19 @@ function playHighPico(ctx,dest,time,accent){const o=ctx.createOscillator(),g=ctx
 function scheduleCountIn(startTime,onDone){const beatDur=60/currentBpm;document.getElementById('beatProgressLabel').textContent='カウント 1';for(let ci=0;ci<4;ci++){const t=startTime+ci*beatDur,num=ci+1,d=Math.max(0,(t-audioCtx.currentTime)*1000);setTimeout(()=>{if(!running)return;playHihat(audioCtx,getDest(),audioCtx.currentTime+0.005,num===1);flashBeat('flash-countin');document.getElementById('beatProgressLabel').textContent='カウント '+num;},d);}nextBeatTime=startTime+4*beatDur;const afterDelay=Math.max(0,(nextBeatTime-audioCtx.currentTime)*1000);setTimeout(()=>{if(!running)return;if(!fixedTempo)document.getElementById('beatProgressLabel').textContent='次のテンポアップまで';buildDots();onDone();},afterDelay);}
 function playSnare(ctx,dest,time,accent){const len=ctx.sampleRate*(accent?.18:.13),buf=ctx.createBuffer(1,len,ctx.sampleRate),data=buf.getChannelData(0);for(let i=0;i<len;i++){const t=i/ctx.sampleRate;data[i]=Math.sin(2*Math.PI*(accent?200:160)*t)*Math.exp(-t*30)*.6+(Math.random()*2-1)*Math.exp(-t*(accent?18:25))*.7;}const src=ctx.createBufferSource();src.buffer=buf;const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=200;const g=ctx.createGain();src.connect(hp);hp.connect(g);g.connect(dest);g.gain.setValueAtTime(accent?.9:.65,time);src.start(time);}
 function playSound(time,isAcc){const ctx=audioCtx,dest=getDest(),accent=accentEnabled&&isAcc,s=currentSound;if(s==='digital'){const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(dest);o.frequency.value=accent?1200:900;g.gain.setValueAtTime(accent?.5:.3,time);g.gain.exponentialRampToValueAtTime(.001,time+.06);o.start(time);o.stop(time+.07);}else if(s==='highpico'){playHighPico(ctx,dest,time,accent);}else if(s==='wood'){const o=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain();o.connect(f);f.connect(g);g.connect(dest);o.type='triangle';o.frequency.value=accent?800:600;f.type='bandpass';f.frequency.value=accent?800:600;f.Q.value=3;g.gain.setValueAtTime(accent?.7:.45,time);g.gain.exponentialRampToValueAtTime(.001,time+.08);o.start(time);o.stop(time+.09);}else if(s==='sine'){const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(dest);o.type='sine';o.frequency.value=accent?660:440;g.gain.setValueAtTime(0,time);g.gain.linearRampToValueAtTime(accent?.4:.25,time+.01);g.gain.exponentialRampToValueAtTime(.001,time+.18);o.start(time);o.stop(time+.2);}else if(s==='snare'){playSnare(ctx,dest,time,accent);}}
-function scheduleBeats(){
-  if(!running)return;
-  const p=getParams();
-  while(nextBeatTime<audioCtx.currentTime+0.1){
-    const localBeat=beatCount%p.interval;
-    const isAcc=(localBeat%4===0);
-    playSound(nextBeatTime,isAcc);
-    const delay=Math.max(0,(nextBeatTime-audioCtx.currentTime)*1000);
-    const lb=localBeat;
-    setTimeout(()=>{if(!running)return;flashBeat(accentEnabled&&isAcc?'flash-accent':'flash');updateDots(lb);},delay);
-    beatCount++;
-    if(!fixedTempo&&beatCount>0&&beatCount%p.interval===0){
-      currentBpm=Math.min(currentBpm+p.step,p.endBpm);
-      const pct=(currentBpm-p.startBpm)/Math.max(1,p.endBpm-p.startBpm)*100;
-      setTimeout(()=>{if(!running)return;bpmDisp.textContent=currentBpm;progressFill.style.width=Math.min(pct,100)+'%';statusEl.textContent=currentBpm>=p.endBpm?'目標テンポに到達しました！':'';},delay);
-      const beatDur=60/currentBpm;nextBeatTime+=p.pause;
-      if(countInEnabled){cancelAnimationFrame(schedulerRafId);scheduleCountIn(nextBeatTime,()=>scheduleBeats());return;}
-      else{nextBeatTime+=beatDur;}continue;
-    }
-    nextBeatTime+=60/currentBpm;
+function scheduleBeats(){if(!running)return;const p=getParams();while(nextBeatTime<audioCtx.currentTime+0.1){const localBeat=beatCount%p.interval;const isAcc=(localBeat%4===0);playSound(nextBeatTime,isAcc);const delay=Math.max(0,(nextBeatTime-audioCtx.currentTime)*1000);const lb=localBeat;setTimeout(()=>{if(!running)return;flashBeat(accentEnabled&&isAcc?'flash-accent':'flash');updateDots(lb);},delay);beatCount++;if(!fixedTempo&&beatCount>0&&beatCount%p.interval===0){currentBpm=Math.min(currentBpm+p.step,p.endBpm);const pct=(currentBpm-p.startBpm)/Math.max(1,p.endBpm-p.startBpm)*100;setTimeout(()=>{if(!running)return;bpmDisp.textContent=currentBpm;progressFill.style.width=Math.min(pct,100)+'%';statusEl.textContent=currentBpm>=p.endBpm?'目標テンポに到達しました！':'';},delay);const beatDur=60/currentBpm;nextBeatTime+=p.pause;if(countInEnabled){cancelAnimationFrame(schedulerRafId);scheduleCountIn(nextBeatTime,()=>scheduleBeats());return;}else{nextBeatTime+=beatDur;}continue;}nextBeatTime+=60/currentBpm;}schedulerRafId=requestAnimationFrame(scheduleBeats);}
+
+function toggleMetronome(){
+  if(running){
+    running=false;cancelAnimationFrame(schedulerRafId);
+    startBtn.textContent='スタート';startBtn.classList.remove('running');
+    statusEl.textContent='停止中';buildDots();
+  } else {
+    initAudio();
+    audioCtx.resume().then(()=>startPlaying());
   }
-  schedulerRafId=requestAnimationFrame(scheduleBeats);
 }
-function initAudio(){audioCtx=new(window.AudioContext||window.webkitAudioContext)();masterGain=audioCtx.createGain();masterGain.gain.setValueAtTime(volumeLevel,audioCtx.currentTime);limiter=audioCtx.createDynamicsCompressor();limiter.threshold.value=-3;limiter.knee.value=3;limiter.ratio.value=20;limiter.attack.value=0.001;limiter.release.value=0.1;masterGain.connect(limiter);limiter.connect(audioCtx.destination);}
-function toggleMetronome(){if(running){running=false;cancelAnimationFrame(schedulerRafId);startBtn.textContent='スタート';startBtn.classList.remove('running');statusEl.textContent='停止中';buildDots();}else{initAudio();audioCtx.resume().then(()=>{const p=getParams();currentBpm=p.startBpm;beatCount=0;nextBeatTime=audioCtx.currentTime+0.05;bpmDisp.textContent=currentBpm;progressFill.style.width='0%';statusEl.textContent='';running=true;startBtn.textContent='停止';startBtn.classList.add('running');buildDots();if(countInEnabled)scheduleCountIn(nextBeatTime,()=>scheduleBeats());else scheduleBeats();});}}
+
 function applyDefaults(){
   currentSound=DEFAULTS.sound;document.querySelectorAll('#soundChips .chip').forEach(c=>c.classList.remove('active'));document.querySelector('#soundChips .chip[data-sound="'+DEFAULTS.sound+'"]').classList.add('active');
   accentEnabled=DEFAULTS.accent;document.getElementById('accentToggle').classList.toggle('on',accentEnabled);

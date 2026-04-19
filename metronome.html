@@ -54,6 +54,22 @@ h1 { font-size: 16px; font-weight: 500; color: #555; text-align: center; margin-
 .progress-bar { height: 4px; background: #1a1a1a; border-radius: 2px; margin-top: 1.25rem; overflow: hidden; }
 .progress-fill { height: 100%; background: #1D9E75; border-radius: 2px; transition: width 0.3s; width: 0%; }
 .status { font-size: 12px; color: #555; text-align: center; margin-top: 8px; min-height: 18px; }
+
+/* 積算タイマー */
+.timer-display { text-align: center; margin: 0 0 1.25rem; padding: 12px 0; border-top: 1px solid #1e1e1e; border-bottom: 1px solid #1e1e1e; }
+.timer-label { font-size: 11px; color: #555; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.timer-value { font-size: 28px; font-weight: 300; color: #ccc; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.timer-value .timer-unit { font-size: 13px; color: #555; font-weight: 400; margin: 0 2px; }
+.timer-running-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; margin-left: 8px; vertical-align: middle; animation: pulse-dot 1.2s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+
+/* 折りたたみセクション */
+.collapsible-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 10px 0; margin-bottom: 0.5rem; touch-action: manipulation; }
+.collapsible-header .section-label { margin-bottom: 0; }
+.collapse-arrow { font-size: 14px; color: #555; transition: transform 0.25s ease; }
+.collapsible-header.open .collapse-arrow { transform: rotate(180deg); }
+.collapsible-body { overflow: hidden; transition: max-height 0.3s ease, opacity 0.25s ease; max-height: 0; opacity: 0; }
+.collapsible-body.open { max-height: 800px; opacity: 1; }
 </style>
 </head>
 <body>
@@ -66,6 +82,19 @@ h1 { font-size: 16px; font-weight: 500; color: #555; text-align: center; margin-
     <div class="beat-progress-label" id="beatProgressLabel">次のテンポアップまで</div>
     <div class="beat-rows" id="beatRows"></div>
   </div>
+
+  <!-- 積算タイマー -->
+  <div class="timer-display">
+    <div class="timer-label">練習時間</div>
+    <div class="timer-value" id="timerValue">0<span class="timer-unit">時間</span>0<span class="timer-unit">分</span></div>
+  </div>
+
+  <!-- 折りたたみセクション -->
+  <div class="collapsible-header" id="settingsHeader" onclick="toggleSettings()">
+    <div class="section-label">各種設定</div>
+    <span class="collapse-arrow">▼</span>
+  </div>
+  <div class="collapsible-body" id="settingsBody">
 
   <div class="section-label">音色</div>
   <div class="chip-row" id="soundChips">
@@ -114,6 +143,8 @@ h1 { font-size: 16px; font-weight: 500; color: #555; text-align: center; margin-
 
   <div class="row" id="rowStep"><label>1回の上昇量</label><input type="range" id="step" min="1" max="10" step="1" value="5"><span class="val"><span id="stepVal">5</span> BPM</span></div>
 
+  </div><!-- /collapsible-body -->
+
   <hr class="divider">
 
   <div class="row">
@@ -143,6 +174,73 @@ const volEl=document.getElementById('volume');
 const bpmDisp=document.getElementById('bpmDisp'),beatEl=document.getElementById('beat');
 const startBtn=document.getElementById('startBtn'),progressFill=document.getElementById('progressFill'),statusEl=document.getElementById('status');
 
+/* ===== 積算タイマー ===== */
+const TIMER_KEY = 'metronome_practice_seconds';
+let accumulatedSeconds = parseInt(localStorage.getItem(TIMER_KEY) || '0', 10);
+let timerInterval = null;
+let sessionStartTime = null;
+
+function formatTimer(totalSec) {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  return h + '<span class="timer-unit">時間</span>' + m + '<span class="timer-unit">分</span>';
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timerValue');
+  let total = accumulatedSeconds;
+  if (sessionStartTime !== null) {
+    total += Math.floor((Date.now() - sessionStartTime) / 1000);
+  }
+  const dot = running ? '<span class="timer-running-dot"></span>' : '';
+  el.innerHTML = formatTimer(total) + dot;
+}
+
+function startTimer() {
+  sessionStartTime = Date.now();
+  updateTimerDisplay();
+  timerInterval = setInterval(updateTimerDisplay, 1000);
+}
+
+function stopTimer() {
+  if (sessionStartTime !== null) {
+    accumulatedSeconds += Math.floor((Date.now() - sessionStartTime) / 1000);
+    sessionStartTime = null;
+    localStorage.setItem(TIMER_KEY, String(accumulatedSeconds));
+  }
+  clearInterval(timerInterval);
+  timerInterval = null;
+  updateTimerDisplay();
+}
+
+// ページを離れるときに保存
+window.addEventListener('beforeunload', function() {
+  if (sessionStartTime !== null) {
+    accumulatedSeconds += Math.floor((Date.now() - sessionStartTime) / 1000);
+    localStorage.setItem(TIMER_KEY, String(accumulatedSeconds));
+  }
+});
+
+// visibilitychange でバックグラウンド時も保存
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden' && sessionStartTime !== null) {
+    accumulatedSeconds += Math.floor((Date.now() - sessionStartTime) / 1000);
+    sessionStartTime = Date.now(); // リセットして二重計上防止
+    localStorage.setItem(TIMER_KEY, String(accumulatedSeconds));
+  }
+});
+
+updateTimerDisplay();
+
+/* ===== 折りたたみ ===== */
+function toggleSettings() {
+  const header = document.getElementById('settingsHeader');
+  const body = document.getElementById('settingsBody');
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+/* ===== メトロノーム本体 ===== */
 volEl.addEventListener('input',function(){volumeLevel=calcVol(parseInt(this.value));document.getElementById('volumeVal').textContent=this.value;if(masterGain)masterGain.gain.setTargetAtTime(volumeLevel,audioCtx.currentTime,0.01);});
 pauseEl.addEventListener('input',function(){document.getElementById('pauseDurVal').textContent=parseFloat(this.value).toFixed(1).replace('.0','');});
 document.getElementById('soundChips').addEventListener('click',function(e){const chip=e.target.closest('.chip');if(!chip)return;document.querySelectorAll('#soundChips .chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');currentSound=chip.dataset.sound;});
@@ -166,6 +264,7 @@ function startPlaying(){
   bpmDisp.textContent=currentBpm;progressFill.style.width='0%';statusEl.textContent='';
   running=true;startBtn.textContent='停止';startBtn.classList.add('running');
   buildDots();
+  startTimer();
   if(countInEnabled)scheduleCountIn(nextBeatTime,()=>scheduleBeats());else scheduleBeats();
 }
 
@@ -193,6 +292,7 @@ function toggleMetronome(){
     running=false;cancelAnimationFrame(schedulerRafId);
     startBtn.textContent='スタート';startBtn.classList.remove('running');
     statusEl.textContent='停止中';buildDots();
+    stopTimer();
   } else {
     initAudio();
     audioCtx.resume().then(()=>startPlaying());
@@ -211,7 +311,7 @@ function applyDefaults(){
   currentInterval=DEFAULTS.interval;document.querySelectorAll('#intervalChips .chip').forEach(c=>c.classList.remove('active'));document.querySelector('#intervalChips .chip[data-interval="'+DEFAULTS.interval+'"]').classList.add('active');
   stepEl.value=DEFAULTS.step;document.getElementById('stepVal').textContent=DEFAULTS.step;
 }
-function resetMetronome(){running=false;cancelAnimationFrame(schedulerRafId);clearTimeout(restartDebounce);startBtn.textContent='スタート';startBtn.classList.remove('running');progressFill.style.width='0%';statusEl.textContent='';applyDefaults();currentBpm=DEFAULTS.startBpm;bpmDisp.textContent=currentBpm;buildDots();}
+function resetMetronome(){running=false;cancelAnimationFrame(schedulerRafId);clearTimeout(restartDebounce);startBtn.textContent='スタート';startBtn.classList.remove('running');progressFill.style.width='0%';statusEl.textContent='';applyDefaults();currentBpm=DEFAULTS.startBpm;bpmDisp.textContent=currentBpm;buildDots();stopTimer();}
 buildDots();bpmDisp.textContent=startBpmEl.value;
 </script>
 </body>

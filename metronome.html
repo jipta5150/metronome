@@ -204,6 +204,7 @@ let beatCount=0,nextBeatTime=0,schedulerRafId=null;
 let currentSound=DEFAULTS.sound,accentEnabled=DEFAULTS.accent,countInEnabled=DEFAULTS.countIn;
 let fixedTempo=DEFAULTS.fixedTempo,currentInterval=DEFAULTS.interval;
 let startBpmValue=DEFAULTS.startBpm, endBpmValue=DEFAULTS.endBpm;
+let reachedTargetBpm=false;
 function calcVol(v){return Math.pow(v/100,2)*4.0;}
 let volumeLevel=calcVol(DEFAULTS.volume),restartDebounce=null;
 const stepEl=document.getElementById('step'),pauseEl=document.getElementById('pauseDur');
@@ -295,7 +296,7 @@ function initAudio(){
   masterGain.connect(limiter);limiter.connect(audioCtx.destination);
 }
 function startPlaying(){
-  const p=getParams();currentBpm=p.startBpm;beatCount=0;
+  const p=getParams();currentBpm=p.startBpm;beatCount=0;reachedTargetBpm=false;
   nextBeatTime=audioCtx.currentTime+0.1;
   bpmDisp.textContent=currentBpm;progressFill.style.width='0%';statusEl.textContent='';
   running=true;startBtn.textContent='停止';startBtn.classList.add('running');
@@ -307,7 +308,7 @@ function startPlaying(){
 function toggleFixedTempo(){fixedTempo=!fixedTempo;document.getElementById('fixedTempoToggle').classList.toggle('on',fixedTempo);applyFixedTempoUI();if(running)scheduleRestart();}
 function applyFixedTempoUI(){const disabled=fixedTempo;document.getElementById('rowEndBpm').classList.toggle('disabled',disabled);document.getElementById('rowStep').classList.toggle('disabled',disabled);document.getElementById('labelInterval').style.opacity=disabled?'0.3':'1';document.querySelectorAll('#intervalChips .chip').forEach(c=>c.classList.toggle('disabled',disabled));document.getElementById('beatProgressLabel').textContent=disabled?'':'次のテンポアップまで';}
 function scheduleRestart(){clearTimeout(restartDebounce);restartDebounce=setTimeout(()=>{if(running)doRestart();},300);}
-function doRestart(){cancelAnimationFrame(schedulerRafId);currentBpm=startBpmValue;beatCount=0;progressFill.style.width='0%';statusEl.textContent='';bpmDisp.textContent=currentBpm;nextBeatTime=audioCtx.currentTime+0.1;buildDots();if(countInEnabled)scheduleCountIn(nextBeatTime,()=>scheduleBeats());else scheduleBeats();}
+function doRestart(){cancelAnimationFrame(schedulerRafId);currentBpm=startBpmValue;beatCount=0;reachedTargetBpm=false;progressFill.style.width='0%';statusEl.textContent='';bpmDisp.textContent=currentBpm;nextBeatTime=audioCtx.currentTime+0.1;buildDots();if(countInEnabled)scheduleCountIn(nextBeatTime,()=>scheduleBeats());else scheduleBeats();}
 function toggleAccent(){accentEnabled=!accentEnabled;document.getElementById('accentToggle').classList.toggle('on',accentEnabled);}
 function toggleCountIn(){countInEnabled=!countInEnabled;document.getElementById('countInToggle').classList.toggle('on',countInEnabled);}
 function getParams(){return{startBpm:startBpmValue,endBpm:endBpmValue,interval:currentInterval,step:parseInt(stepEl.value),pause:parseFloat(pauseEl.value)};}
@@ -331,7 +332,7 @@ function autoStop(){
   stopTimer();
 }
 
-function scheduleBeats(){if(!running)return;const p=getParams();while(nextBeatTime<audioCtx.currentTime+0.1){const localBeat=beatCount%p.interval;const isAcc=(localBeat%4===0);playSound(nextBeatTime,isAcc);const delay=Math.max(0,(nextBeatTime-audioCtx.currentTime)*1000);const lb=localBeat;setTimeout(()=>{if(!running)return;flashBeat(accentEnabled&&isAcc?'flash-accent':'flash');updateDots(lb);},delay);beatCount++;if(!fixedTempo&&beatCount>0&&beatCount%p.interval===0){currentBpm=Math.min(currentBpm+p.step,p.endBpm);const pct=(currentBpm-p.startBpm)/Math.max(1,p.endBpm-p.startBpm)*100;const reachedTarget=(currentBpm>=p.endBpm);setTimeout(()=>{if(!running)return;bpmDisp.textContent=currentBpm;progressFill.style.width=Math.min(pct,100)+'%';if(reachedTarget){autoStop();}},delay);if(reachedTarget){return;}const beatDur=60/currentBpm;nextBeatTime+=p.pause;if(countInEnabled){cancelAnimationFrame(schedulerRafId);scheduleCountIn(nextBeatTime,()=>scheduleBeats());return;}else{nextBeatTime+=beatDur;}continue;}nextBeatTime+=60/currentBpm;}schedulerRafId=requestAnimationFrame(scheduleBeats);}
+function scheduleBeats(){if(!running)return;const p=getParams();while(nextBeatTime<audioCtx.currentTime+0.1){const localBeat=beatCount%p.interval;const isAcc=(localBeat%4===0);playSound(nextBeatTime,isAcc);const delay=Math.max(0,(nextBeatTime-audioCtx.currentTime)*1000);const lb=localBeat;setTimeout(()=>{if(!running)return;flashBeat(accentEnabled&&isAcc?'flash-accent':'flash');updateDots(lb);},delay);beatCount++;if(!fixedTempo&&beatCount>0&&beatCount%p.interval===0){if(reachedTargetBpm){setTimeout(()=>{if(!running)return;autoStop();},delay);return;}currentBpm=Math.min(currentBpm+p.step,p.endBpm);const pct=(currentBpm-p.startBpm)/Math.max(1,p.endBpm-p.startBpm)*100;const justReached=(currentBpm>=p.endBpm);if(justReached)reachedTargetBpm=true;setTimeout(()=>{if(!running)return;bpmDisp.textContent=currentBpm;progressFill.style.width=Math.min(pct,100)+'%';if(justReached)statusEl.textContent='目標テンポ到達 — 最終インターバル実行中...';},delay);const beatDur=60/currentBpm;nextBeatTime+=p.pause;buildDots();if(countInEnabled){cancelAnimationFrame(schedulerRafId);scheduleCountIn(nextBeatTime,()=>scheduleBeats());return;}else{nextBeatTime+=beatDur;}continue;}nextBeatTime+=60/currentBpm;}schedulerRafId=requestAnimationFrame(scheduleBeats);}
 
 function toggleMetronome(){
   if(running){
